@@ -52,19 +52,47 @@ class AvatarDataMessage extends PiranhaMessage {
     this.writeInt(0) // 0 buffs
     
     // 4. Inventory (class_400 -> class_399 -> class_68)
-    // class_400:
-    this.writeInt(0) // var_610 materials bag: 0 slots
-    this.writeInt(100) // var_550 (game money)
-    this.writeInt(0) // var_188 (diamonds)
-    // var_163: ingredient counts - 11 ints (matching CreatePlayerOkMessage)
+    // Decode order in class_400.decode():
+    // 1. var_610.decode() (materials bag)
+    // 2. var_550 (gameMoney)
+    // 3. var_188 (diamonds)
+    // 4. var_163 (ingredients - 330 ints)
+    // 5. super.decode() -> class_399.decode():
+    //    a. var_135.decode() (equipment bag - 14 slots)
+    //    b. var_65 (isMeleeEquipped boolean)
+    //    c. super.decode() -> class_68.decode():
+    //       - var_121.decode() (regular bag)
+    
+    // Materials bag (var_610): 0 slots for now
+    this.writeInt(0)
+    
+    // Game money (var_550)
+    this.writeInt(100)
+    
+    // Diamonds (var_188)
+    this.writeInt(0)
+    
+    // Ingredients (var_163): 11 ints (11 named ingredient items in ingredients.csv)
+    // Note: ingredients.csv has 330 rows but only 11 unique ingredients (each with level sub-rows)
     for (let i = 0; i < 11; i++) {
       this.writeInt(0)
     }
-    // class_399:
-    this.writeInt(0) // var_135 equipment bag: 0 slots
-    this.writeBoolean(true) // var_65 (isMeleeEquipped)
-    // class_68:
-    this.writeInt(0) // var_121 regular bag: 0 slots
+    
+    // Equipment bag (var_135): 14 slots (prop_classes.csv row count)
+    // Each empty slot is just a 0 (null item globalID)
+    this.writeInt(14)
+    for (let i = 0; i < 14; i++) {
+      this.writeInt(0) // empty slot: null item globalID
+    }
+    
+    // isMeleeEquipped (var_65)
+    this.writeBoolean(true)
+    
+    // Regular bag (var_121): 20 slots
+    this.writeInt(20)
+    for (let i = 0; i < 20; i++) {
+      this.writeInt(0) // empty slot: null item globalID
+    }
     
     // 5. Attributes (class_375 -> class_87 -> class_86)
     this.writeInt(1) // expLevel

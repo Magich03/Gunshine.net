@@ -2,7 +2,7 @@
     "Server": {
         "Port": 9339,
         "RC4Key": "88778f76fwe67r5f78wer678r9we7",
-        "Debug": false
+        "Debug": true
     },
     "Database": {
         "Host": "127.0.0.1",
