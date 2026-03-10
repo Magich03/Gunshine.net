@@ -9,10 +9,10 @@ Open source private server for Gunshine.net (2011) written on Node.js
 2. Go into Command Prompt or Terminal and type `npm install` to build the server.
 3. Go into Command Prompt or Terminal and type `node .` to start the server.
 
-## Note
-I'm still working on the client for Gunshine.net.
+
 
 ## Credits
 Core created by [tailsjs](https://github.com/tailsjs/nodebrawl-core)   
+
 
 
