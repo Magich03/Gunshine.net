@@ -40,9 +40,11 @@ class EndTurnMessage extends PiranhaMessage {
   }
 
   async encode() {
-    // Tick values
-    this.writeInt(0)  // tick1 - current tick
-    this.writeInt(0)  // tick2 - sub-tick
+    // Tick values - use reasonable tick values
+    // Client expects these to be > 0 for commands to execute
+    const tick = Math.floor(Date.now() / 100) // Approximate game tick
+    this.writeInt(tick)  // tick1 - current tick
+    this.writeInt(0)     // tick2 - sub-tick
     
     // Command count
     this.writeInt(this.commands.length)
