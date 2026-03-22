@@ -13,29 +13,25 @@ class DebugCommandHandler extends CommandHandler {
 
   async handle(client, stream) {
     try {
-      // Read debug command data
-      const debugType = stream.readInt()
+      // Read avatarID (first int after command type)
+      const avatarId = stream.readInt()
+      const executeTick = stream.readInt()
       
-      console.log(`[DebugCommandHandler] Received debug command: ${debugType}`)
+      console.log(`[DebugCommandHandler] DEBUG_ADD_MONEY for avatar ${avatarId}`)
       
-      // Handle different debug commands based on type
-      switch (debugType) {
-        case 0: // Add money
-          if (client.player && client.player.resources) {
-            client.player.resources.money = (client.player.resources.money || 0) + 1000
-            console.log(`[DebugCommandHandler] Added 1000 money`)
-          }
-          break
-        case 1: // Set level
-          // Read level
-          const level = stream.readInt()
-          if (client.player) {
-            client.player.level = level
-            console.log(`[DebugCommandHandler] Set level to ${level}`)
-          }
-          break
-        default:
-          console.log(`[DebugCommandHandler] Unknown debug type: ${debugType}`)
+      // Add money and diamonds to player
+      if (client.player) {
+        if (!client.player.resources) {
+          client.player.resources = {}
+        }
+        
+        // Add 1000 gold
+        client.player.resources.money = (client.player.resources.money || 0) + 1000
+        
+        // Add 1000 diamonds (if we have that field)
+        client.player.resources.diamonds = (client.player.resources.diamonds || 0) + 1000
+        
+        console.log(`[DebugCommandHandler] Added 1000 gold and 1000 diamonds to player`)
       }
 
       return {
