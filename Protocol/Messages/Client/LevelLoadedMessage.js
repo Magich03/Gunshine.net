@@ -1,6 +1,7 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 const StartLogicMessage = require('../Server/StartLogicMessage')
 const EndTurnMessage = require('../Server/EndTurnMessage')
+const AddPlayerCommand = require('../../Commands/AddPlayerCommand')
 const { getInstance: getPlayerStorage } = require('../../../DataBase/PlayerStorage')
 
 /**
@@ -14,9 +15,6 @@ const { getInstance: getPlayerStorage } = require('../../../DataBase/PlayerStora
  * Server must respond with:
  * 1. StartLogicMessage (20405) - starts the game logic timer
  * 2. EndTurnMessage (20400) with AddPlayerCommand - spawns the player in world
- * 
- * The client waits for the player object to exist in getGameObjectManager()
- * before continuing past 79% (see class_174.as lines 464-471).
  */
 class LevelLoadedMessage extends PiranhaMessage {
   constructor(bytes, client) {
@@ -38,11 +36,7 @@ class LevelLoadedMessage extends PiranhaMessage {
     await new StartLogicMessage(this.client).send()
     
     // 2. Send EndTurnMessage with AddPlayerCommand to spawn the player
-    // This is required for the client to find the player in getPlayerByAvatarId()
-    // and continue loading past 79%
-    
     // Get real player data from storage
-    const playerStorage = getPlayerStorage()
     const player = this.client.player
     
     if (!player) {
@@ -50,21 +44,29 @@ class LevelLoadedMessage extends PiranhaMessage {
       return
     }
 
-    // Prepare player data from storage with real values
+    // Prepare player data with real values
     const playerData = {
-      characterDataId: player.characterDataId || 2097199,  // MalePlayerConstructionWorker
+      characterDataId: player.characterDataId || 2097199,
       idHigh: player.highId || 0,
       idLow: player.lowId || 1,  // IMPORTANT: Must NOT be 0
       name: player.name || "Player",
-      position: player.position || { x: 0, y: 0 },
-      resources: player.resources || {},
-      stats: player.stats || {}
+      level: player.level || 1,
+      resources: player.resources || {
+        health: 100,
+        energy: 100,
+        money: 100
+      }
     }
     
     console.log('[LevelLoadedMessage] Spawning player:', playerData.name, `(ID: ${playerData.idHigh}:${playerData.idLow})`)
-    console.log('[LevelLoadedMessage] Sending EndTurnMessage (20400) with AddPlayerCommand')
-    const endTurnMsg = new EndTurnMessage(this.client, playerData)
-    endTurnMsg.addPlayerCommand(playerData)
+    
+    // Create EndTurnMessage with AddPlayerCommand
+    const endTurnMsg = new EndTurnMessage(this.client)
+    const addPlayerCmd = new AddPlayerCommand(playerData)
+    addPlayerCmd.executeTick = 0
+    endTurnMsg.addCommand(addPlayerCmd)
+    
+    console.log('[LevelLoadedMessage] Sending EndTurnMessage (20400) with AddPlayerCommand (type 16)')
     await endTurnMsg.send()
     
     console.log('[LevelLoadedMessage] Player spawned in game world!')
