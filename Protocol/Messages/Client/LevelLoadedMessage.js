@@ -1,6 +1,7 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 const StartLogicMessage = require('../Server/StartLogicMessage')
 const EndTurnMessage = require('../Server/EndTurnMessage')
+const { getInstance: getPlayerStorage } = require('../../../DataBase/PlayerStorage')
 
 /**
  * LevelLoadedMessage (10405)
@@ -39,13 +40,28 @@ class LevelLoadedMessage extends PiranhaMessage {
     // 2. Send EndTurnMessage with AddPlayerCommand to spawn the player
     // This is required for the client to find the player in getPlayerByAvatarId()
     // and continue loading past 79%
-    const playerData = this.client.playerData || {
-      characterDataId: 2097199,  // MalePlayerConstructionWorker
-      idHigh: 0,
-      idLow: 1,
-      name: "Player"
+    
+    // Get real player data from storage
+    const playerStorage = getPlayerStorage()
+    const player = this.client.player
+    
+    if (!player) {
+      console.error('[LevelLoadedMessage] ERROR: No player data available!')
+      return
+    }
+
+    // Prepare player data from storage with real values
+    const playerData = {
+      characterDataId: player.characterDataId || 2097199,  // MalePlayerConstructionWorker
+      idHigh: player.highId || 0,
+      idLow: player.lowId || 1,  // IMPORTANT: Must NOT be 0
+      name: player.name || "Player",
+      position: player.position || { x: 0, y: 0 },
+      resources: player.resources || {},
+      stats: player.stats || {}
     }
     
+    console.log('[LevelLoadedMessage] Spawning player:', playerData.name, `(ID: ${playerData.idHigh}:${playerData.idLow})`)
     console.log('[LevelLoadedMessage] Sending EndTurnMessage (20400) with AddPlayerCommand')
     const endTurnMsg = new EndTurnMessage(this.client, playerData)
     endTurnMsg.addPlayerCommand(playerData)
