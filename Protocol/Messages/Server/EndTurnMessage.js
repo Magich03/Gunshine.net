@@ -122,7 +122,7 @@ class EndTurnMessage extends PiranhaMessage {
     //    b. var_65 (isMeleeEquipped boolean)
     //    c. super.decode() -> class_68.decode():
     //       - var_121.decode() (regular bag)
-    
+
     // Materials bag (var_610): 0 slots for now
     this.writeInt(0)
     
@@ -250,6 +250,29 @@ class EndTurnMessage extends PiranhaMessage {
     
     // 26. Version
     this.writeInt(0)
+  }
+
+  async send() {
+    try {
+      this.encode()
+
+      const id = Buffer.alloc(2)
+      id.writeUInt16BE(this.id, 0)
+
+      const len = Buffer.alloc(3)
+      len.writeUIntBE(this.buffer.length, 0, 3)
+
+      const message = Buffer.concat([id, len, this.buffer])
+
+      // Encrypt
+      const encrypted = await this.client.crypto.encrypt(message.slice(5))
+      const finalMessage = Buffer.concat([message.slice(0, 5), encrypted])
+
+      this.client.write(finalMessage)
+      this.client.log(`[EndTurnMessage] Sent end turn packet (${this.commands.length} commands)`)
+    } catch (err) {
+      console.error('Error sending EndTurnMessage:', err)
+    }
   }
 }
 

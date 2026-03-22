@@ -1,6 +1,6 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 const { getInstance: getCommandRegistry } = require('../../CommandRegistry')
-const CommandResultMessage = require('../Server/CommandResultMessage')
+const EndTurnMessage = require('../Server/EndTurnMessage')
 
 /**
  * CommandExecuteMessage (ID: 10403)
@@ -67,8 +67,10 @@ class CommandExecuteMessage extends PiranhaMessage {
       this.data.parameters
     )
 
-    // Send response
-    await new CommandResultMessage(this.client, result).send()
+    // Send response via EndTurnMessage (20400) which client recognizes
+    // This sends an empty command list but updates client state
+    const response = new EndTurnMessage(this.client)
+    await response.send()
   }
 }
 
