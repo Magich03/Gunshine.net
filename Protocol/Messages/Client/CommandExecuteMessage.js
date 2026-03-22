@@ -55,9 +55,13 @@ class CommandExecuteMessage extends PiranhaMessage {
     if (result.success) {
       console.log(`[CommandExecuteMessage] Command ${this.commandType} executed successfully`)
       
-      // If there are commands to broadcast to other clients, send EndTurnMessage
+      // Send EndTurnMessage to client with authoritative state
+      // This tells the client WHERE to move (server-authoritative)
       if (result.commands && result.commands.length > 0) {
+        console.log(`[CommandExecuteMessage] Broadcasting ${result.commands.length} command(s)`)
         this.broadcastCommands(result.commands)
+      } else {
+        console.log(`[CommandExecuteMessage] No commands to broadcast`)
       }
     } else {
       console.log(`[CommandExecuteMessage] Command ${this.commandType} failed: ${result.error}`)

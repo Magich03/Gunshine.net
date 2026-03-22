@@ -46,6 +46,8 @@ class EndTurnMessage extends PiranhaMessage {
     this.writeInt(tick)  // tick1 - current tick
     this.writeInt(0)     // tick2 - sub-tick
     
+    console.log(`[EndTurnMessage] Encoding with tick=${tick}`)
+    
     // Command count
     this.writeInt(this.commands.length)
     
