@@ -1,6 +1,9 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 const LoginOkMessage = require('../Server/LoginOkMessage')
 const LoginFailedMessage = require('../Server/LoginFailedMessage')
+const { getInstance: getResourceRegeneration } = require('../../ResourceRegenerationSystem')
+const { getInstance: getBuffDebuffSystem } = require('../../BuffDebuffSystem')
+const { getInstance: getPlayerStorage } = require('../../../DataBase/PlayerStorage')
 
 class LoginMessage extends PiranhaMessage {
   constructor (bytes, client) {
@@ -24,10 +27,24 @@ class LoginMessage extends PiranhaMessage {
       Email: this.data.Email,
       PasswordHash: this.data.PasswordHash
     })
-    this.client.mongoose.getPlayer(this.client, async (err, player) => {
-      this.client.player = player
-      await new LoginOkMessage(this.client).send()
-    })
+    
+    // Get player from in-memory storage
+    const playerStorage = getPlayerStorage()
+    // For now, create a player ID from email hash
+    const emailHash = this.data.Email.charCodeAt(0) || 1
+    const player = playerStorage.getPlayer(emailHash, this.data.Email.length)
+    
+    this.client.player = player
+    
+    // Start resource regeneration for this player
+    const regenerationSystem = getResourceRegeneration()
+    regenerationSystem.startRegeneration(this.client)
+    
+    // Start buff/debuff system for this player
+    const buffSystem = getBuffDebuffSystem()
+    buffSystem.startBuffTicker(this.client)
+    
+    await new LoginOkMessage(this.client).send()
   }
 }
 

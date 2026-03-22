@@ -1,18 +1,24 @@
 console.clear()
 
 const figlet = require('figlet')
-
 const net = require('net')
 const MessageFactory = require('./Protocol/MessageFactory')
+const { getInstance: getCommandRegistry } = require('./Protocol/CommandRegistry')
+const { getInstance: getPlayerStorage } = require('./DataBase/PlayerStorage')
+const { getInstance: getResourceRegeneration } = require('./Protocol/ResourceRegenerationSystem')
+const { getInstance: getBuffDebuffSystem } = require('./Protocol/BuffDebuffSystem')
+
 const server = new net.Server()
 const Messages = new MessageFactory()
 const config = require('./config.json')
 const PORT = config.Server.Port
-
 const Crypto = require("./Crypto")
 
-let mongooseInstance = require('./DataBase/mongoose');
-mongooseInstance = new mongooseInstance();
+// Initialize command registry
+getCommandRegistry()
+
+// Initialize player storage
+const playerStorage = getPlayerStorage()
 
 server.on('connection', async (client) => {
   client.setNoDelay(true)
@@ -28,7 +34,7 @@ server.on('connection', async (client) => {
 
   client.log('A wild connection appeared!')
   client.crypto = new Crypto()
-  client.mongoose = mongooseInstance
+  client.storage = playerStorage
   
   const packets = Messages.getPackets();
 
@@ -74,6 +80,14 @@ server.on('connection', async (client) => {
   })
 
   client.on('end', async () => {
+    // Stop resource regeneration for this player
+    const regenerationSystem = getResourceRegeneration()
+    regenerationSystem.stopRegeneration(client)
+    
+    // Stop buff/debuff ticker for this player
+    const buffSystem = getBuffDebuffSystem()
+    buffSystem.stopBuffTicker(client)
+    
     return client.log('Client disconnected.')
   })
 
@@ -87,16 +101,12 @@ server.on('connection', async (client) => {
 })
 
 console.log(figlet.textSync('Gunshine.net'))
-mongooseInstance.connect(isSuccess => {
-  if (isSuccess) {
-    server.once('listening', () => console.log(`[SERVER] >> Server started on ${PORT} port!`))
-    server.listen(PORT)
-  }
-  else {
-    console.log("[SERVER] >> Server didn't start because of a database problem.")
-  }
-})
+console.log(`[SERVER] >> Initializing Gunshine.net on port ${PORT}...`)
+console.log(`[SERVER] >> Command Registry loaded`)
+console.log(`[SERVER] >> Player Storage initialized (In-Memory)`)
+
+server.once('listening', () => console.log(`[SERVER] >> Server started on ${PORT} port!`))
+server.listen(PORT)
 
 process.on("uncaughtException", e => console.log(e));
-
 process.on("unhandledRejection", e => console.log(e));
