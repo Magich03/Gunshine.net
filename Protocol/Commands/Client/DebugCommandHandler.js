@@ -13,16 +13,17 @@ class DebugCommandHandler extends CommandHandler {
 
   async handle(client, stream) {
     try {
-      // Read avatarID (first int after command type)
-      const avatarId = stream.readInt()
+      // Read avatarID as two ints (matching client's readLong)
+      const avatarIdHigh = stream.readInt()
+      const avatarIdLow = stream.readInt()
       const executeTick = stream.readInt()
       
-      console.log(`[DebugCommandHandler] DEBUG_ADD_MONEY for avatar ${avatarId}`)
+      console.log(`[DebugCommandHandler] DEBUG_ADD_MONEY for avatar ${avatarIdHigh}:${avatarIdLow}`)
       
       // Echo back the command so client executes it locally
       // The client will add money to its local state
       const DebugCommand = require('../Server/DebugCommand')
-      const debugCmd = new DebugCommand(avatarId)
+      const debugCmd = new DebugCommand(avatarIdHigh, avatarIdLow)
       debugCmd.executeTick = executeTick
       
       console.log(`[DebugCommandHandler] Echoing debug command back to client`)

@@ -7,13 +7,15 @@ const Command = require('./Command')
  * Matches client's class_548 structure.
  * 
  * Encoding:
- * - avatarID (int)
+ * - avatarID high (int)
+ * - avatarID low (int)
  * - executeTick (int) [from base]
  */
 class DebugCommand extends Command {
-  constructor(avatarId = 0) {
+  constructor(avatarIdHigh = 0, avatarIdLow = 0) {
     super()
-    this.avatarId = avatarId
+    this.avatarIdHigh = avatarIdHigh
+    this.avatarIdLow = avatarIdLow
   }
 
   getCommandType() {
@@ -21,7 +23,8 @@ class DebugCommand extends Command {
   }
 
   encode(stream) {
-    stream.writeInt(this.avatarId)
+    stream.writeInt(this.avatarIdHigh)
+    stream.writeInt(this.avatarIdLow)
     super.encode(stream)
   }
 }

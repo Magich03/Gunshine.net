@@ -40,9 +40,9 @@ class EndTurnMessage extends PiranhaMessage {
   }
 
   async encode() {
-    // Tick values - use tick=100 for future execution
+    // Tick values - use tick=1 for immediate processing
     // Commands execute when currentTick >= executeTick
-    this.writeInt(100) // tick1 - current tick (must be <= executeTick)
+    this.writeInt(1)  // tick1 - current tick
     this.writeInt(0)   // tick2 - sub-tick
     
     // Command count
