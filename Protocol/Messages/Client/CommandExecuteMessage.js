@@ -1,6 +1,6 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 const { getInstance: getCommandRegistry } = require('../../CommandRegistry')
-const EndTurnMessage = require('../Server/EndTurnMessage')
+const ByteStream = require('../../../ByteStream')
 
 /**
  * CommandExecuteMessage (ID: 10403)
@@ -67,10 +67,46 @@ class CommandExecuteMessage extends PiranhaMessage {
       this.data.parameters
     )
 
-    // Send response via EndTurnMessage (20400) which client recognizes
-    // This sends an empty command list but updates client state
-    const response = new EndTurnMessage(this.client)
-    await response.send()
+    // Send simple acknowledgment response (message 20403 equivalent)
+    // Just echo back success status and minimal data
+    await this.sendCommandAck(result)
+  }
+
+  async sendCommandAck(result) {
+    try {
+      // Create acknowledgment response
+      const ack = new ByteStream()
+      
+      // Write success byte
+      ack.writeByte(result.success ? 1 : 0)
+      
+      // Write command ID that was executed
+      ack.writeInt(this.data.commandId)
+      
+      // Write error message if failed
+      if (!result.success) {
+        ack.writeString(result.error || 'Unknown error')
+      }
+
+      // Prepare packet
+      const id = Buffer.alloc(2)
+      id.writeUInt16BE(20403, 0) // Use 20403 for command response
+      
+      const payload = ack.buffer.slice(ack.index - ack.buffer.length)
+      const len = Buffer.alloc(3)
+      len.writeUIntBE(payload.length, 0, 3)
+
+      const message = Buffer.concat([id, len, payload])
+
+      // Encrypt
+      const encrypted = await this.client.crypto.encrypt(message.slice(5))
+      const finalMessage = Buffer.concat([message.slice(0, 5), encrypted])
+
+      this.client.write(finalMessage)
+      this.client.log(`[CommandExecuteMessage] Sent ack for command ${this.data.commandId}`)
+    } catch (err) {
+      console.error('Error sending command ack:', err)
+    }
   }
 }
 
