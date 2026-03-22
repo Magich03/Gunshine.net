@@ -55,9 +55,14 @@ class CommandExecuteMessage extends PiranhaMessage {
     if (result.success) {
       console.log(`[CommandExecuteMessage] Command ${this.commandType} executed successfully`)
       
-      // Send EndTurnMessage to client with authoritative state
+      // Send EndTurnMessage with commands to broadcast
       if (result.commands && result.commands.length > 0) {
         this.broadcastCommands(result.commands)
+      } else {
+        // For commands without broadcast (like MOVE), send empty EndTurnMessage
+        // This tells client the command was processed and it can continue
+        const endTurnMsg = new EndTurnMessage(this.client)
+        endTurnMsg.send()
       }
     } else {
       console.log(`[CommandExecuteMessage] Command ${this.commandType} failed: ${result.error}`)
