@@ -54,11 +54,14 @@ class MoveCommandHandler extends CommandHandler {
 
         console.log(`[MoveCommandHandler] Player ${avatarIdHigh}:${avatarIdLow} moved to (${x}, ${y})`)
 
-        // Client moves locally - no need to send back
-        // Just log for server-side validation/recording
+        // Echo back the MOVE command so client knows server received it
+        // Use the same executeTick the client sent
+        const moveCommand = new MoveCommand(avatarIdHigh, avatarIdLow, x, y, layerGlobalID)
+        moveCommand.executeTick = executeTick // Echo back the same tick
+
         return {
           success: true,
-          commands: [] // Don't send anything back
+          commands: [moveCommand] // Send back to confirm
         }
       }
 
