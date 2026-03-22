@@ -22,27 +22,10 @@ class CommandResultMessage extends PiranhaMessage {
     this.writeString(jsonStr)
   }
 
-  async send() {
-    try {
-      this.encode()
-
-      const id = Buffer.alloc(2)
-      id.writeUInt16BE(this.id, 0)
-
-      const len = Buffer.alloc(3)
-      len.writeUIntBE(this.buffer.length, 0, 3)
-
-      const message = Buffer.concat([id, len, this.buffer])
-
-      // Encrypt
-      const encrypted = await this.client.crypto.encrypt(message.slice(5))
-      const finalMessage = Buffer.concat([message.slice(0, 5), encrypted])
-
-      this.client.write(finalMessage)
-      this.client.log(`[CommandResultMessage] Sent result for command`)
-    } catch (err) {
-      console.error('Error sending CommandResultMessage:', err)
-    }
+  send() {
+    // Use base class send() - DO NOT encrypt server->client messages
+    // Client does not decrypt incoming messages (only client->server are encrypted)
+    super.send()
   }
 }
 

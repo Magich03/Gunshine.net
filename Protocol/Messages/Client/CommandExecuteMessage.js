@@ -1,6 +1,6 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 const { getInstance: getCommandRegistry } = require('../../CommandRegistry')
-const ByteStream = require('../../../ByteStream')
+const CommandResultMessage = require('../Server/CommandResultMessage')
 
 /**
  * CommandExecuteMessage (ID: 10403)
@@ -74,38 +74,20 @@ class CommandExecuteMessage extends PiranhaMessage {
 
   async sendCommandAck(result) {
     try {
-      // Create acknowledgment response
-      const ack = new ByteStream()
+      // Use proper CommandResultMessage instead of manual ByteStream
+      const resultMsg = new CommandResultMessage(this.client, {
+        commandId: this.data.commandId,
+        success: result.success,
+        error: result.error || null,
+        data: result.data || {}
+      })
       
-      // Write success byte
-      ack.writeByte(result.success ? 1 : 0)
+      // Use base class send() which handles encryption properly
+      resultMsg.send()
       
-      // Write command ID that was executed
-      ack.writeInt(this.data.commandId)
-      
-      // Write error message if failed
-      if (!result.success) {
-        ack.writeString(result.error || 'Unknown error')
-      }
-
-      // Prepare packet
-      const id = Buffer.alloc(2)
-      id.writeUInt16BE(20403, 0) // Use 20403 for command response
-      
-      const payload = ack.buffer.slice(ack.index - ack.buffer.length)
-      const len = Buffer.alloc(3)
-      len.writeUIntBE(payload.length, 0, 3)
-
-      const message = Buffer.concat([id, len, payload])
-
-      // Encrypt
-      const encrypted = await this.client.crypto.encrypt(message.slice(5))
-      const finalMessage = Buffer.concat([message.slice(0, 5), encrypted])
-
-      this.client.write(finalMessage)
-      this.client.log(`[CommandExecuteMessage] Sent ack for command ${this.data.commandId}`)
+      this.client.log(`[CommandExecuteMessage] Sent result message for command ${this.data.commandId}`)
     } catch (err) {
-      console.error('Error sending command ack:', err)
+      console.error('Error sending command result:', err)
     }
   }
 }
