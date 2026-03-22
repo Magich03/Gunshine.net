@@ -55,15 +55,9 @@ class CommandExecuteMessage extends PiranhaMessage {
     if (result.success) {
       console.log(`[CommandExecuteMessage] Command ${this.commandType} executed successfully`)
       
-      // Send EndTurnMessage with commands to broadcast
-      if (result.commands && result.commands.length > 0) {
-        this.broadcastCommands(result.commands)
-      } else {
-        // For commands without broadcast (like MOVE), send empty EndTurnMessage
-        // This tells client the command was processed and it can continue
-        const endTurnMsg = new EndTurnMessage(this.client)
-        endTurnMsg.send()
-      }
+      // For commands without broadcast, DON'T send anything
+      // Client moves locally and doesn't need server response
+      // This is for single-player / client-side prediction mode
     } else {
       console.log(`[CommandExecuteMessage] Command ${this.commandType} failed: ${result.error}`)
       // NO direct response - client will timeout if expecting acknowledgment

@@ -54,13 +54,11 @@ class MoveCommandHandler extends CommandHandler {
 
         console.log(`[MoveCommandHandler] Player ${avatarIdHigh}:${avatarIdLow} moved to (${x}, ${y})`)
 
-        // For single-player: send MOVE command with proper tick
-        const moveCommand = new MoveCommand(avatarIdHigh, avatarIdLow, x, y, layerGlobalID)
-        moveCommand.executeTick = 1 // Set to 1 so it executes when tick reaches 1
-        
+        // Client moves locally - no need to send back
+        // Just log for server-side validation/recording
         return {
           success: true,
-          commands: [moveCommand] // Send back to trigger execution
+          commands: [] // Don't send anything back
         }
       }
 
