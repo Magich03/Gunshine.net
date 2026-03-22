@@ -41,9 +41,10 @@ class MoveCommandHandler extends CommandHandler {
           return { success: false, error: 'Invalid player ID' }
         }
 
-        // Validate position (basic bounds check)
-        const maxDistance = 1000
-        if (x < -maxDistance || x > maxDistance || y < -maxDistance || y > maxDistance) {
+        // Validate position (very permissive - don't know actual map bounds)
+        // Reject obviously invalid positions (way outside any reasonable map)
+        const maxCoord = 100000
+        if (x < -maxCoord || x > maxCoord || y < -maxCoord || y > maxCoord) {
           console.log(`[MoveCommandHandler] Invalid position: ${x}, ${y}`)
           return { success: false, error: 'Invalid position' }
         }
