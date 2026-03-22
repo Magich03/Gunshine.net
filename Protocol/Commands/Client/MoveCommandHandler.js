@@ -54,14 +54,11 @@ class MoveCommandHandler extends CommandHandler {
 
         console.log(`[MoveCommandHandler] Player ${avatarIdHigh}:${avatarIdLow} moved to (${x}, ${y})`)
 
-        // Return success and command to broadcast to OTHER players
-        // (The moving player already knows their own position)
-        const moveCommand = new MoveCommand(avatarIdHigh, avatarIdLow, x, y, layerGlobalID)
-        moveCommand.executeTick = executeTick
-
+        // For single-player: don't broadcast MOVE back to sender
+        // Client moves locally and sends command for validation
         return {
           success: true,
-          commands: [moveCommand] // Broadcast to other clients
+          commands: [] // Don't broadcast back to sender
         }
       }
 
