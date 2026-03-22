@@ -57,6 +57,10 @@ class CommandExecuteMessage extends PiranhaMessage {
       
       // Send EndTurnMessage with commands to broadcast
       if (result.commands && result.commands.length > 0) {
+        console.log(`[CommandExecuteMessage] Broadcasting ${result.commands.length} command(s)`)
+        for (const cmd of result.commands) {
+          console.log(`[CommandExecuteMessage]   - Command type ${cmd.getCommandType()}, executeTick=${cmd.executeTick}`)
+        }
         this.broadcastCommands(result.commands)
       }
     } else {
