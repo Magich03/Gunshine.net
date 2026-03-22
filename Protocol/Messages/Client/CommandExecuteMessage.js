@@ -1,10 +1,15 @@
 const PiranhaMessage = require('../../PiranhaMessage')
-const { getInstance: getCommandRegistry } = require('../../CommandRegistry')
-const CommandResultMessage = require('../Server/CommandResultMessage')
+const { getInstance: getCommandManager } = require('../../Commands/CommandManager')
+const EndTurnMessage = require('../Server/EndTurnMessage')
 
 /**
  * CommandExecuteMessage (ID: 10403)
- * Client sends commands through this message
+ * 
+ * Client sends game commands through this message.
+ * Commands use type IDs (501 MOVE, 503 SKILL, etc.) matching client's class_141.
+ * 
+ * Server processes command, updates state, broadcasts via EndTurnMessage.
+ * NO direct response is sent - EndTurnMessage is the "acknowledgment".
  */
 class CommandExecuteMessage extends PiranhaMessage {
   constructor(bytes, client) {
@@ -15,27 +20,53 @@ class CommandExecuteMessage extends PiranhaMessage {
   }
 
   async decode() {
-    this.data = {}
-    this.data.commandId = this.readInt()
+    // Read command type (501 MOVE, 503 SKILL, etc.)
+    this.commandType = this.readInt()
     
-    // Read command data as JSON
-    try {
-      const jsonStr = this.readString()
-      this.data.parameters = JSON.parse(jsonStr)
-    } catch (e) {
-      this.data.parameters = {}
-    }
-
-    this.client.log(`[CommandExecuteMessage] Command ID: ${this.data.commandId}, Params:`, this.data.parameters)
+    // Command data follows - will be read by handler
+    // We don't read it here, pass the stream to CommandManager
+    
+    console.log(`[CommandExecuteMessage] Command type: ${this.commandType}`)
   }
 
   async process() {
     if (!this.client.player || !this.client.userObject) {
-      this.client.log('Command failed: not authenticated')
+      console.log('[CommandExecuteMessage] Command failed: not authenticated')
       return
     }
 
     // Initialize player state if needed
+    this.initializePlayerState()
+
+    // Process command using CommandManager
+    const manager = getCommandManager()
+    
+    // Create a copy of the stream at current offset for the handler
+    // The handler will read command-specific data
+    const commandData = this.buffer.slice(this.offset)
+    
+    // Process the command
+    const result = await manager.processCommand(
+      this.commandType,
+      this.client,
+      this
+    )
+
+    if (result.success) {
+      console.log(`[CommandExecuteMessage] Command ${this.commandType} executed successfully`)
+      
+      // If there are commands to broadcast to other clients, send EndTurnMessage
+      if (result.commands && result.commands.length > 0) {
+        this.broadcastCommands(result.commands)
+      }
+    } else {
+      console.log(`[CommandExecuteMessage] Command ${this.commandType} failed: ${result.error}`)
+      // NO direct response - client will timeout if expecting acknowledgment
+      // The client doesn't expect 20403 response
+    }
+  }
+
+  initializePlayerState() {
     if (!this.client.player.resources) {
       this.client.player.resources = {
         health: 100, maxHealth: 100,
@@ -52,42 +83,32 @@ class CommandExecuteMessage extends PiranhaMessage {
     }
 
     if (!this.client.player.position) {
-      this.client.player.position = { x: 0, y: 0 }
+      this.client.player.position = { x: 0, y: 0, layer: 0 }
     }
 
     if (!this.client.player.buffs) {
       this.client.player.buffs = []
     }
-
-    // Execute command
-    const registry = getCommandRegistry()
-    const result = await registry.execute(
-      this.data.commandId,
-      this.client,
-      this.data.parameters
-    )
-
-    // Send simple acknowledgment response (message 20403 equivalent)
-    // Just echo back success status and minimal data
-    await this.sendCommandAck(result)
   }
 
-  async sendCommandAck(result) {
+  /**
+   * Broadcast commands to all clients via EndTurnMessage
+   * @param {Command[]} commands
+   */
+  async broadcastCommands(commands) {
     try {
-      // Use proper CommandResultMessage instead of manual ByteStream
-      const resultMsg = new CommandResultMessage(this.client, {
-        commandId: this.data.commandId,
-        success: result.success,
-        error: result.error || null,
-        data: result.data || {}
-      })
+      const endTurnMsg = new EndTurnMessage(this.client)
       
-      // Use base class send() which handles encryption properly
-      resultMsg.send()
+      for (const cmd of commands) {
+        endTurnMsg.addCommand(cmd)
+      }
       
-      this.client.log(`[CommandExecuteMessage] Sent result message for command ${this.data.commandId}`)
+      // Send to this client (and would broadcast to others in multiplayer)
+      await endTurnMsg.send()
+      
+      console.log(`[CommandExecuteMessage] Broadcast ${commands.length} command(s) via EndTurnMessage`)
     } catch (err) {
-      console.error('Error sending command result:', err)
+      console.error('[CommandExecuteMessage] Error broadcasting commands:', err)
     }
   }
 }

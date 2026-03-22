@@ -1,5 +1,4 @@
 const Command = require('./Command')
-const ByteStream = require('../../ByteStream')
 
 /**
  * AddPlayerCommand (type 16)

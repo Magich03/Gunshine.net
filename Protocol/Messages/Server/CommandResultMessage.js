@@ -1,7 +1,7 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 
 /**
- * CommandResultMessage (ID: 20403)
+ * CommandResultMessage (ID: 20403)//thzis id dont exist on client!!
  * Server sends command execution result to client
  */
 class CommandResultMessage extends PiranhaMessage {
@@ -9,7 +9,7 @@ class CommandResultMessage extends PiranhaMessage {
     super()
     this.client = client
     this.result = result
-    this.id = 20403
+    this.id = 20400
     this.version = 1
   }
 

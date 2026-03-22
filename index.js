@@ -3,7 +3,7 @@ console.clear()
 const figlet = require('figlet')
 const net = require('net')
 const MessageFactory = require('./Protocol/MessageFactory')
-const { getInstance: getCommandRegistry } = require('./Protocol/CommandRegistry')
+const { getInstance: getCommandManager } = require('./Protocol/Commands/CommandManager')
 const { getInstance: getPlayerStorage } = require('./DataBase/PlayerStorage')
 const { getInstance: getResourceRegeneration } = require('./Protocol/ResourceRegenerationSystem')
 const { getInstance: getBuffDebuffSystem } = require('./Protocol/BuffDebuffSystem')
@@ -14,8 +14,8 @@ const config = require('./config.json')
 const PORT = config.Server.Port
 const Crypto = require("./Crypto")
 
-// Initialize command registry
-getCommandRegistry()
+// Initialize command manager (loads handlers from Commands/Client folder)
+getCommandManager()
 
 // Initialize player storage
 const playerStorage = getPlayerStorage()

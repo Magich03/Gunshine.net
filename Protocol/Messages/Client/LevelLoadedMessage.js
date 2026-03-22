@@ -1,7 +1,7 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 const StartLogicMessage = require('../Server/StartLogicMessage')
 const EndTurnMessage = require('../Server/EndTurnMessage')
-const AddPlayerCommand = require('../../Commands/AddPlayerCommand')
+const AddPlayerCommand = require('../../Commands/Server/AddPlayerCommand')
 const { getInstance: getPlayerStorage } = require('../../../DataBase/PlayerStorage')
 
 /**
