@@ -40,9 +40,8 @@ class EndTurnMessage extends PiranhaMessage {
   }
 
   async encode() {
-    // Tick values - use reasonable small tick values
-    // Client expects small positive integers for spawn commands
-    this.writeInt(1)   // tick1 - current tick (small value)
+    // Tick values - use 0 for immediate execution
+    this.writeInt(0)   // tick1 - execute immediately
     this.writeInt(0)   // tick2 - sub-tick
     
     // Command count

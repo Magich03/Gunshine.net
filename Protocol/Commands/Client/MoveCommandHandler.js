@@ -54,11 +54,14 @@ class MoveCommandHandler extends CommandHandler {
 
         console.log(`[MoveCommandHandler] Player ${avatarIdHigh}:${avatarIdLow} moved to (${x}, ${y})`)
 
-        // For single-player: don't broadcast MOVE back to sender
+        // For single-player: send minimal response so client knows command was received
         // Client moves locally and sends command for validation
+        const moveCommand = new MoveCommand(avatarIdHigh, avatarIdLow, x, y, layerGlobalID)
+        moveCommand.executeTick = 0 // Execute immediately
+
         return {
           success: true,
-          commands: [] // Don't broadcast back to sender
+          commands: [moveCommand] // Send back to confirm
         }
       }
 
