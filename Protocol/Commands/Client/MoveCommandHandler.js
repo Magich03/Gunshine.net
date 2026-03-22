@@ -32,8 +32,12 @@ class MoveCommandHandler extends CommandHandler {
 
       // Verify this is the client's own player
       if (client.player) {
-        if (client.player.highId !== avatarIdHigh || client.player.lowId !== avatarIdLow) {
-          console.log(`[MoveCommandHandler] Player ${avatarIdHigh}:${avatarIdLow} tried to move another player`)
+        // Handle both property name formats: idHigh:idLow or highId:lowId
+        const playerHighId = client.player.idHigh !== undefined ? client.player.idHigh : client.player.highId
+        const playerLowId = client.player.idLow !== undefined ? client.player.idLow : client.player.lowId
+        
+        if (playerHighId !== avatarIdHigh || playerLowId !== avatarIdLow) {
+          console.log(`[MoveCommandHandler] Player ${avatarIdHigh}:${avatarIdLow} tried to move another player (stored: ${playerHighId}:${playerLowId})`)
           return { success: false, error: 'Invalid player ID' }
         }
 
